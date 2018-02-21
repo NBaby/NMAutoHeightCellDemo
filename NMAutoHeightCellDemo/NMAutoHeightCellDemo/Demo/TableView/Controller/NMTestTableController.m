@@ -63,6 +63,7 @@
 - (IBAction)tapAddBtn:(id)sender {
     NMDataModel * model = [[NMDataModel alloc] init];
     model.title = self.inputTextField.text;
+    model.numInt = 2;
     [dataArray addObject:model];
     [self.mainTableView reloadData];
     self.inputTextField.text = nil;

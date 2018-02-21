@@ -100,6 +100,9 @@
         if ([currentObjPointArr containsObject:target]) {
             return @"objHasInclude";
         }
+        if (target == nil) {
+            return @"nil";
+        }
         [currentObjPointArr addObject:target];
         NSString * resultKey = @"";
         if ([target isKindOfClass:[NSString class]]) {
@@ -139,14 +142,37 @@
         }
         else if ([target isKindOfClass:[NMAutoHeightModel class]]){
             NSArray * propertyArr = ((NMAutoHeightModel *)target).autoHeightProperty;
+            
             for (NSInteger i = 0; i < propertyArr.count; i ++) {
+                
+                const char * propertyName = [propertyArr[i] UTF8String];
+                objc_property_t property = class_getProperty([target class], propertyName);
+                unsigned int attrCount = 0;
+                objc_property_attribute_t * attrs = property_copyAttributeList(property, &attrCount);
+                NMPropertyType  propertyType = NMPropertyTypeUnknown;
+                for (unsigned int j = 0; j < attrCount; j ++) {
+                    switch (attrs[j].name[0]) {
+                    case 'T':
+                            if (attrs[j].value) {
+                                propertyType = getPropertyType(attrs[j].value);
+                            }
+                       break;
+                    }
+                }
                 if (i == 0) {
                     resultKey = [NSString stringWithFormat:@"%@{",resultKey];
                 }
                 else {
                     resultKey = [NSString stringWithFormat:@"%@,",resultKey];
                 }
-                resultKey = [NSString stringWithFormat:@"%@%@:%@",resultKey,propertyArr[i],[self cacheKeyWithModel:[target valueForKey:propertyArr[i]] andArray:currentObjPointArr]];
+                if (propertyType != 0 && propertyType <= NMPropertyTypeLongDouble ) {
+                    //基础类型
+                     resultKey = [NSString stringWithFormat:@"%@%@:%@",resultKey,propertyArr[i],[target valueForKey:propertyArr[i]]];
+                }
+                else {
+                    resultKey = [NSString stringWithFormat:@"%@%@:%@",resultKey,propertyArr[i],[self cacheKeyWithModel:[target valueForKey:propertyArr[i]] andArray:currentObjPointArr]];
+                }
+                
                 if (i == propertyArr.count -1) {
                     resultKey = [NSString stringWithFormat:@"%@}",resultKey];
                 }
@@ -161,6 +187,43 @@
         }
         
     }
+}
+
+NMPropertyType getPropertyType(const char *typeEncoding){
+    char *type = (char *)typeEncoding;
+    if (!type) return NMPropertyTypeUnknown;
+    size_t len = strlen(type);
+    if (len == 0) return NMPropertyTypeUnknown;
+
+    switch (*type) {
+        case 'v': return NMPropertyTypeVoid ;
+        case 'B': return NMPropertyTypeBool ;
+        case 'c': return NMPropertyTypeInt8 ;
+        case 'C': return NMPropertyTypeUInt8 ;
+        case 's': return NMPropertyTypeInt16 ;
+        case 'S': return NMPropertyTypeUInt16 ;
+        case 'i': return NMPropertyTypeInt32 ;
+        case 'I': return NMPropertyTypeUInt32 ;
+        case 'l': return NMPropertyTypeInt32 ;
+        case 'L': return NMPropertyTypeUInt32 ;
+        case 'q': return NMPropertyTypeInt64 ;
+        case 'Q': return NMPropertyTypeUInt64 ;
+        case 'f': return NMPropertyTypeFloat ;
+        case 'd': return NMPropertyTypeDouble ;
+        case 'D': return NMPropertyTypeLongDouble ;
+        case '#': return NMPropertyTypeClass ;
+        case ':': return NMPropertyTypeSEL ;
+        case '*': return NMPropertyTypeCString ;
+        case '^': return NMPropertyTypePointer ;
+        case '[': return NMPropertyTypeCArray ;
+        case '(': return NMPropertyTypeUnion ;
+        case '{': return NMPropertyTypeStruct ;
+        case '@': {
+            return NMPropertyTypeObject ;
+        }
+        default: return NMPropertyTypeUnknown ;
+    }
+    return NMPropertyTypeUnknown;
 }
 
 @end

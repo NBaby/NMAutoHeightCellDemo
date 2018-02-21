@@ -10,4 +10,12 @@
 #import "NMAutoHeightModel.h"
 @interface NMDataModel : NMAutoHeightModel
 @property (copy, nonatomic) NSString * title;
+
+@property (assign, nonatomic) double numDouble;
+
+@property (assign, nonatomic) int numInt;
+
+@property (strong, nonatomic) NSArray * arr;
+
+@property (strong, nonatomic) NSDictionary * dic;
 @end

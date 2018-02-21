@@ -10,6 +10,6 @@
 
 @implementation NMDataModel
 - (NSArray *)autoHeightProperty{
-    return @[@"title"];
+    return @[@"title",@"numInt",@"arr"];
 }
 @end
